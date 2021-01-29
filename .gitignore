@@ -34,4 +34,6 @@
 # Folders
 /ThirdParty/ImFramework/
 /ThirdParty/vcpkg/
+/ThirdParty/imgui/
+/ThirdParty/imgui_markdown/
 /Build/

@@ -150,20 +150,19 @@ int main(int argc, char** argv) {
     int currCard = 0;
     std::vector<Card> cards;
 
+    auto exePath = std::filesystem::path(std::string(argv[0]));
+    auto flashcardPath = exePath.parent_path().string() + "\\FlashCards";
+
     // Load cards
     {
-        auto p = std::filesystem::path(std::string(argv[0]));
-        auto q = p.parent_path().string() + "\\FlashCards";
-        
-        if (!std::filesystem::exists(std::filesystem::path(q))) {
+        if (!std::filesystem::exists(std::filesystem::path(flashcardPath))) {
             std::cout << "FlashCards folder does not exits" << std::endl;
             return -1;
         }
 
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(q)) {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(flashcardPath)) {
             auto currPath = entry.path().string();
             if (currPath.find(".md") != std::string::npos) {
-                std::cout << currPath << std::endl;
                 files.push_back(currPath);
             }
         }
@@ -185,7 +184,7 @@ int main(int argc, char** argv) {
                 for (int i = 0; i < files.size(); i++) {
                     ImGui::PushID(id++);
 
-                    ImGui::Text(files[i].c_str());
+                    ImGui::Text(files[i].substr(flashcardPath.size() + 1, files[i].size() - flashcardPath.size()).c_str());
                     ImGui::SameLine();
                     if (ImGui::Button("Select")) {
                         currCardSetPath = files[i];
@@ -259,6 +258,11 @@ int main(int argc, char** argv) {
 
                 // Buttons
                 {
+                    ImGui::Text(currCardSetPath.c_str());
+
+                    ImGui::Separator();
+
+
                     auto& io = ImGui::GetIO();
 
                     if (ImGui::Button("Show answer") ||
@@ -297,6 +301,7 @@ int main(int argc, char** argv) {
 
                     if (ImGui::Button("Next") || ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_RightArrow])) {
                         if (currCard != cards.size() - 1) {
+                            showAnswer = false;
                             currCard++;
                         }
                     }
