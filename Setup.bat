@@ -1,7 +1,5 @@
 @echo off
 
-goto test
-
 mkdir ThirdParty
 cd ThirdParty
 
@@ -17,16 +15,12 @@ cmd /c vcpkg.exe install glfw3 glew --triplet x64-windows
 
 cd../..
 
-:test
-
 mkdir Build
 cd Build
 
 cmake -G "Visual Studio 16 2019" ..
 
 
-
-pause
 
 
 
