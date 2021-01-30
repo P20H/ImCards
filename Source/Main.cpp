@@ -9,6 +9,9 @@
 #include <algorithm>
 
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 //-----------------------------------------------------------------------------
 // [SECTION] Example App: Docking, DockSpace / ShowExampleAppDockSpace()
 //-----------------------------------------------------------------------------
@@ -125,6 +128,105 @@ void ShowExampleAppDockSpace(bool* p_open)
     ImGui::End();
 }
 
+
+
+
+
+bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
+{
+    // Load from file
+    int image_width = 0;
+    int image_height = 0;
+    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+    if (image_data == NULL)
+        return false;
+
+    // Create a OpenGL texture identifier
+    GLuint image_texture;
+    glGenTextures(1, &image_texture);
+    glBindTexture(GL_TEXTURE_2D, image_texture);
+
+    // Setup filtering parameters for display
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+
+    // Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+    stbi_image_free(image_data);
+
+    *out_texture = image_texture;
+    *out_width = image_width;
+    *out_height = image_height;
+
+    return true;
+}
+
+static std::string currCardSetPath = "";
+static std::string flashcardPath = "";
+
+inline ImGui::MarkdownImageData ImageCallback(ImGui::MarkdownLinkCallbackData data_)
+{
+    // In your application you would load an image based on data_ input. Here we just use the imgui font texture.
+    //ImTextureID image = ImGui::GetIO().Fonts->TexID;
+    // > C++14 can use ImGui::MarkdownImageData imageData{ true, false, image, ImVec2( 40.0f, 20.0f ) };
+
+    std::string link = data_.link;
+
+    // 2 -> asume that the relative path begins with ./
+    link = link.substr(2, data_.linkLength -2);
+    static std::filesystem::path imgPath = "";
+
+
+    static ImGui::MarkdownImageData imageData;
+
+    auto tmpImgPath = std::filesystem::path(currCardSetPath).parent_path() / std::filesystem::path(link);;
+    if (tmpImgPath.compare(imgPath) == 0) {
+        return imageData;
+    }
+    else {
+        imgPath = tmpImgPath;
+    }
+
+    if (!std::filesystem::exists(imgPath)) {
+        return imageData;
+    }
+
+    GLuint texture = 0;
+    int width = 0;
+    int height = 0;
+    if (!LoadTextureFromFile(imgPath.string().c_str(), &texture, &width, &height)) {
+        return imageData;
+    }
+
+    if (imageData.user_texture_id != 0) {
+        glDeleteTextures(0, (GLuint*)imageData.user_texture_id);
+    }
+
+
+    imageData.isValid = true;
+    imageData.useLinkCallback = false;
+    imageData.user_texture_id = (ImTextureID)texture;
+    imageData.size = ImVec2(width, height);
+
+
+    // For image resize when available size.x > image width, add
+    ImVec2 const contentSize = ImGui::GetContentRegionAvail();
+    if (imageData.size.x > contentSize.x)
+    {
+        float const ratio = imageData.size.y / imageData.size.x;
+        imageData.size.x = contentSize.x;
+        imageData.size.y = contentSize.x * ratio;
+    }
+
+    return imageData;
+}
+
+
 int main(int argc, char** argv) {
     ImFramework::Init();
 
@@ -136,12 +238,12 @@ int main(int argc, char** argv) {
 
     static ImGui::MarkdownConfig mdConfig;
 
+
     struct Card {
         std::string Question = "";
         std::string Answer   = "";
     };
 
-    std::string currCardSetPath = "";
     std::vector<std::string> files;
 
 
@@ -151,7 +253,7 @@ int main(int argc, char** argv) {
     std::vector<Card> cards;
 
     auto exePath = std::filesystem::path(std::string(argv[0]));
-    auto flashcardPath = exePath.parent_path().string() + "\\FlashCards";
+    flashcardPath = exePath.parent_path().string() + "\\FlashCards";
 
     // Load cards
     {
@@ -171,9 +273,23 @@ int main(int argc, char** argv) {
 
     while (ImFramework::Begin()) 
     {
+
         ImFramework::BeginWindow();
         {
             static bool show = true;
+
+            //mdConfig.linkCallback = LinkCallback;
+            mdConfig.tooltipCallback = NULL;
+            mdConfig.imageCallback = ImageCallback;
+            //mdConfig.linkIcon = ICON_FA_LINK;
+            //mdConfig.headingFormats[0] = { H1, true };
+            //mdConfig.headingFormats[1] = { H2, true };
+            //mdConfig.headingFormats[2] = { H3, false };
+            mdConfig.userData = NULL;
+           // mdConfig.formatCallback = ExampleMarkdownFormatCallback;
+
+
+
             ShowExampleAppDockSpace(&show);
 
             // Select set
@@ -181,11 +297,26 @@ int main(int argc, char** argv) {
                 ImGui::Begin("Card sets");
                 int id = 0;
 
+                static char filterText[255] = {0};
+
+                // has bugs
+                ImGui::InputText("Filter", filterText, IM_ARRAYSIZE(filterText));
+
                 for (int i = 0; i < files.size(); i++) {
+
+                    // filter
+                    if (files[i].find(filterText) != std::string::npos) {
+                        
+                    } else {
+                        continue;
+                    }
+
                     ImGui::PushID(id++);
 
                     ImGui::Text(files[i].substr(flashcardPath.size() + 1, files[i].size() - flashcardPath.size()).c_str());
+
                     ImGui::SameLine();
+
                     if (ImGui::Button("Select")) {
                         currCardSetPath = files[i];
                         cards.clear();
@@ -195,37 +326,30 @@ int main(int argc, char** argv) {
                         std::string str;
                         while (std::getline(file, str))
                         {
-                            Card newCard;
                             if (str.find("##") != std::string::npos) {
-                               
+                                Card newCard;
+
                                 // parse question
                                 std::replace(
-                                    str.begin(), 
-                                    str.end(), 
+                                    str.begin(),
+                                    str.end(),
                                     '#',
                                     ' '
                                 );
-                                newCard.Question = str;
 
-                                // read answer
-                                while (std::getline(file, str)) {
-                                    if (str.find("##") != std::string::npos) {
-                                        break;
-                                    }
-                                    else {
-                                        newCard.Answer.append(str);
-                                        newCard.Answer.append("\n");
-                                    }
-                                }
+                                newCard.Question = str;
                                 cards.push_back(newCard);
+
+                                continue;
                             }
-                            
+                            if (cards.size() > 0) {
+                                cards[cards.size() - 1].Answer.append(str);
+                                cards[cards.size() - 1].Answer.append("\n");
+                            }
                         }
                     }
-
                     ImGui::PopID();
                 }
-
 
                 ImGui::End();
             }
@@ -253,66 +377,71 @@ int main(int argc, char** argv) {
 
             // Buttons
             {
+                if (cards.size() > 0) {
 
-                ImGui::Begin("Buttons");
+                    ImGui::Begin("Buttons");
 
-                // Buttons
-                {
-                    ImGui::Text(currCardSetPath.c_str());
-                    ImGui::Text("Anz. Begriffe: %i", cards.size());
-
-                    ImGui::Separator();
+                    {
 
 
-                    auto& io = ImGui::GetIO();
+                        ImGui::Text(currCardSetPath.c_str());
+                        ImGui::Text("Anz. Begriffe: %i", cards.size());
 
-                    if (ImGui::Button("Show answer") ||
-                        ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_DownArrow]) ||
-                        ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_UpArrow])) {
+                        ImGui::Separator();
 
-                        showAnswer = !showAnswer;
-                    }
 
-                    ImGui::SameLine();
+                        auto& io = ImGui::GetIO();
 
-                    if (ImGui::Button("Random question")) {
-                        std::random_device rd; // obtain a random number from hardware
-                        std::mt19937 gen(rd()); // seed the generator
-                        std::uniform_int_distribution<> distr(0, cards.size() - 1); // define the range
 
-                        currCard = distr(gen);
-                    }
 
-                    ImGui::SameLine();
+                        if (ImGui::Button("Show answer") ||
+                            ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_DownArrow]) ||
+                            ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_UpArrow])) {
 
-                    if (ImGui::Button("Shuffle")) {
-                        auto rng = std::default_random_engine{};
-                        std::shuffle(std::begin(cards), std::end(cards), rng);
-                    }
+                            showAnswer = !showAnswer;
+                        }
 
-                    ImGui::SameLine();
+                        ImGui::SameLine();
 
-                    if (ImGui::Button("Back") || ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_LeftArrow])) {
-                        if (currCard > 0) {
-                            currCard--;
+                        if (ImGui::Button("Random question")) {
+                            std::random_device rd; // obtain a random number from hardware
+                            std::mt19937 gen(rd()); // seed the generator
+                            std::uniform_int_distribution<> distr(0, cards.size() - 1); // define the range
+
+                            currCard = distr(gen);
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("Shuffle")) {
+                            auto rng = std::default_random_engine{};
+                            std::shuffle(std::begin(cards), std::end(cards), rng);
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("Back") || ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_LeftArrow])) {
+                            if (currCard > 0) {
+                                currCard--;
+                            }
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("Next") || ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_RightArrow])) {
+                            if (currCard != cards.size() - 1) {
+                                showAnswer = false;
+                                currCard++;
+                            }
                         }
                     }
 
-                    ImGui::SameLine();
-
-                    if (ImGui::Button("Next") || ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_RightArrow])) {
-                        if (currCard != cards.size() - 1) {
-                            showAnswer = false;
-                            currCard++;
-                        }
-                    }
-
-
+                    ImGui::End();
                 }
-                ImGui::End();
             }
 
         }
+
         ImFramework::EndWindow();
 
 
