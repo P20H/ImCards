@@ -259,6 +259,7 @@ int main(int argc, char** argv) {
                 // Buttons
                 {
                     ImGui::Text(currCardSetPath.c_str());
+                    ImGui::Text("Anz. Begriffe: %i", cards.size());
 
                     ImGui::Separator();
 
