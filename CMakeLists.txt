@@ -8,6 +8,9 @@ project(ImCards)
 set(CMAKE_CXX_STANDARD          17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/Install/")
+
+
 find_package(glfw3 CONFIG REQUIRED)
 find_package(GLEW REQUIRED)
 
@@ -54,7 +57,7 @@ add_executable(ImCards
 	Source/Main.cpp
 )
 
-target_link_libraries(ImCards PRIVATE 
+target_link_libraries(ImCards PUBLIC
     ImGui
     ImFramework
 )
@@ -63,3 +66,17 @@ target_include_directories(ImCards PRIVATE
 	ThirdParty/imgui_markdown
 )
 
+
+
+install(TARGETS ImCards
+        RUNTIME
+                DESTINATION "${CMAKE_SOURCE_DIR}/Install/Debug"
+)
+
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/Install/Debug" )
+
+
+
+#install(TARGETS ImCards glfw3 GLEW
+#        CONFIGURATIONS Release
+#        RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/Install/Release)

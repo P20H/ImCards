@@ -358,7 +358,10 @@ int main(int argc, char** argv) {
 
             // Current Card
             {
+
                 ImGui::Begin("Current card");
+
+                ImGui::SetWindowFontScale(2);
 
                 if (cards.size() > 0) {
                     ImGui::Markdown(cards[currCard].Question.c_str(), cards[currCard].Question.length(), mdConfig);
