@@ -246,17 +246,19 @@ int main(int argc, char** argv) {
 
     std::vector<std::string> files;
 
-
     bool showAnswer = false;
 
     int currCard = 0;
     std::vector<Card> cards;
 
     auto exePath = std::filesystem::path(std::string(argv[0]));
+
+
     flashcardPath = exePath.parent_path().string() + "\\FlashCards";
 
     // Load cards
     {
+
         if (!std::filesystem::exists(std::filesystem::path(flashcardPath))) {
             std::cout << "FlashCards folder does not exits" << std::endl;
             return -1;
@@ -268,8 +270,8 @@ int main(int argc, char** argv) {
                 files.push_back(currPath);
             }
         }
-    }
 
+    }
 
     while (ImFramework::Begin()) 
     {
@@ -299,14 +301,13 @@ int main(int argc, char** argv) {
 
                 static char filterText[255] = {0};
 
-                // has bugs
                 ImGui::InputText("Filter", filterText, IM_ARRAYSIZE(filterText));
 
                 for (int i = 0; i < files.size(); i++) {
 
                     // filter
                     if (files[i].find(filterText) != std::string::npos) {
-                        
+                        // do nothing
                     } else {
                         continue;
                     }
@@ -319,6 +320,7 @@ int main(int argc, char** argv) {
 
                     if (ImGui::Button("Select")) {
                         currCardSetPath = files[i];
+
                         cards.clear();
                         currCard = 0;
 
@@ -359,8 +361,8 @@ int main(int argc, char** argv) {
                 ImGui::Begin("Current card");
 
                 if (cards.size() > 0) {
-
                     ImGui::Markdown(cards[currCard].Question.c_str(), cards[currCard].Question.length(), mdConfig);
+                    
                     ImGui::Separator();
 
                     if (showAnswer) {
