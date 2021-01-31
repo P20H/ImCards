@@ -69,14 +69,16 @@ target_include_directories(ImCards PRIVATE
 
 
 install(TARGETS ImCards
+	CONFIGURATIONS Debug
         RUNTIME
                 DESTINATION "${CMAKE_SOURCE_DIR}/Install/Debug"
 )
 
-set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/Install/Debug" )
+install(TARGETS ImCards
+	CONFIGURATIONS Release
+        RUNTIME
+                DESTINATION "${CMAKE_SOURCE_DIR}/Install/Release"
+)
 
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/Install")
 
-
-#install(TARGETS ImCards glfw3 GLEW
-#        CONFIGURATIONS Release
-#        RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/Install/Release)

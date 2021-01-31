@@ -1,6 +1,6 @@
 @echo off
 
-cd Install/Debug
+cd Install/Release
 
 if exist FlashCards (
 	echo Update flashcards
