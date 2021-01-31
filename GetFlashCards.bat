@@ -1,5 +1,7 @@
 @echo off
 
+cd Install/Debug
+
 if exist FlashCards (
 	echo Update flashcards
 	cd FlashCards
