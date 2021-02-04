@@ -230,6 +230,8 @@ inline ImGui::MarkdownImageData ImageCallback(ImGui::MarkdownLinkCallbackData da
 int main(int argc, char** argv) {
     ImFramework::Init();
 
+    ImFramework::EnableFeature(ImFramework_Feature::Feature_DPI_Awareness, true);
+
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
