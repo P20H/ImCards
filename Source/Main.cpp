@@ -220,8 +220,11 @@ inline ImGui::MarkdownImageData ImageCallback(ImGui::MarkdownLinkCallbackData da
     {
         float const ratio = imageData.size.y / imageData.size.x;
         imageData.size.x = contentSize.x;
-        imageData.size.y = contentSize.x * ratio;
+        imageData.size.y = contentSize.x * ratio * ImFramework::GetScaleFactor().x;
     }
+
+    imageData.size.x *= ImFramework::GetScaleFactor().x;
+    imageData.size.y *=ImFramework::GetScaleFactor().x;
 
     return imageData;
 }
@@ -396,10 +399,7 @@ int main(int argc, char** argv) {
 
                         ImGui::Separator();
 
-
                         auto& io = ImGui::GetIO();
-
-
 
                         if (ImGui::Button("Show answer") ||
                             ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_DownArrow]) ||
@@ -441,6 +441,14 @@ int main(int argc, char** argv) {
                                 currCard++;
                             }
                         }
+
+                        static bool alwaysShowAnser = false;
+                        ImGui::Checkbox("Always show solution", &alwaysShowAnser);
+                        if (alwaysShowAnser) {
+                            showAnswer = true;
+                        }
+
+
                     }
 
                     ImGui::End();
