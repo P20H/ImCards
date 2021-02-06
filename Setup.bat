@@ -1,6 +1,8 @@
 @echo off
 
-mkdir ThirdParty
+if not exist ThirdParty (
+     mkdir ThirdParty
+)
 cd ThirdParty
 
 if not exist vcpkg (
@@ -15,10 +17,18 @@ if not exist vcpkg (
 
 if not exist ImFramework (
      git clone https://github.com/CoreTrackProject/ImFramework.git
+) else (
+     cd ImFramework
+     git pull
+     cd ..
 )
 
 if not exist imgui_markdown (
      git clone https://github.com/juliettef/imgui_markdown.git
+) else (
+     cd imgui_markdown
+     git pull
+     cd ..
 )
 
 cd ..
