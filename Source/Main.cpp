@@ -8,7 +8,7 @@
 #include <fstream>
 #include <random>
 #include <algorithm>
-
+#include <functional>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -281,7 +281,7 @@ int main(int argc, char** argv) {
 
 
     {
-        ImProperty::Load("Test.txt");
+        /*ImProperty::Load("Test.txt");
 
         ImProperty::SetValue<std::string>("test_prop", "Hell world");
         std::cout << ImProperty::GetValue<std::string>("test_prop") << std::endl;
@@ -292,7 +292,7 @@ int main(int argc, char** argv) {
         ImProperty::SetValue<bool>("bool_prop", true);
         std::cout << ImProperty::GetValue<bool>("bool_prop") << std::endl;
 
-        ImProperty::Save();
+        ImProperty::Save();*/
     }
 
     while (ImFramework::Begin()) 
@@ -336,10 +336,15 @@ int main(int argc, char** argv) {
 
                     ImGui::PushID(id++);
                     {
+                        std::string relPath = files[i].substr(flashcardPath.size() + 1, files[i].size() - flashcardPath.size());
+
 
                         if (ImGui::Button("Select")) {
-                            currCardSetPath = files[i];
 
+                            std::string pathHash = std::to_string(std::hash<std::string>{}(relPath));
+                            ImProperty::Load(pathHash);
+
+                            currCardSetPath = files[i];
                             cards.clear();
                             currCard = 0;
 
@@ -372,7 +377,7 @@ int main(int argc, char** argv) {
 
                         ImGui::SameLine();
 
-                        ImGui::Text(files[i].substr(flashcardPath.size() + 1, files[i].size() - flashcardPath.size()).c_str());
+                        ImGui::Text(relPath.c_str());
 
                     }
                     ImGui::PopID();
@@ -466,6 +471,18 @@ int main(int argc, char** argv) {
                         ImGui::Checkbox("Always show solution", &alwaysShowAnser);
                         if (alwaysShowAnser) {
                             showAnswer = true;
+                        }
+
+
+                        std::string questionProp = cards[currCard].Question;
+                        bool answerCorrect = ImProperty::GetValue<bool>(questionProp);
+                        if (ImGui::Checkbox("Answered correctly", &answerCorrect)) {
+                            ImProperty::SetValue<bool>(questionProp, answerCorrect);
+                            ImProperty::Save();
+                        }
+                        if (ImGui::IsKeyPressed(io.KeyMap[ImGuiKey_Enter])) {
+                            ImProperty::SetValue<bool>(questionProp, !answerCorrect);
+                            ImProperty::Save();
                         }
 
 
