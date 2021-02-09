@@ -1,4 +1,5 @@
 #include <ImFramework.h>
+#include <ImProperty.h>
 #include <imgui_markdown.h>
 
 #include <iostream>
@@ -278,10 +279,26 @@ int main(int argc, char** argv) {
 
     }
 
+
+    {
+        ImProperty::Load("Test.txt");
+
+        ImProperty::SetValue<std::string>("test_prop", "Hell world");
+        std::cout << ImProperty::GetValue<std::string>("test_prop") << std::endl;
+
+        ImProperty::SetValue<int>("int_prop", 200);
+        std::cout << ImProperty::GetValue<int>("int_prop") << std::endl;
+
+        ImProperty::SetValue<bool>("bool_prop", true);
+        std::cout << ImProperty::GetValue<bool>("bool_prop") << std::endl;
+
+        ImProperty::Save();
+    }
+
     while (ImFramework::Begin()) 
     {
 
-        ImFramework::BeginWindow();
+        ImFramework::BeginWindow("ImCards");
         {
             static bool show = true;
 
@@ -318,42 +335,45 @@ int main(int argc, char** argv) {
                     }
 
                     ImGui::PushID(id++);
+                    {
 
-                    ImGui::Text(files[i].substr(flashcardPath.size() + 1, files[i].size() - flashcardPath.size()).c_str());
+                        if (ImGui::Button("Select")) {
+                            currCardSetPath = files[i];
 
-                    ImGui::SameLine();
+                            cards.clear();
+                            currCard = 0;
 
-                    if (ImGui::Button("Select")) {
-                        currCardSetPath = files[i];
+                            std::ifstream file(currCardSetPath);
+                            std::string str;
+                            while (std::getline(file, str))
+                            {
+                                if (str.find("##") != std::string::npos) {
+                                    Card newCard;
 
-                        cards.clear();
-                        currCard = 0;
+                                    // parse question
+                                    std::replace(
+                                        str.begin(),
+                                        str.end(),
+                                        '#',
+                                        ' '
+                                    );
 
-                        std::ifstream file(currCardSetPath);
-                        std::string str;
-                        while (std::getline(file, str))
-                        {
-                            if (str.find("##") != std::string::npos) {
-                                Card newCard;
+                                    newCard.Question = str;
+                                    cards.push_back(newCard);
 
-                                // parse question
-                                std::replace(
-                                    str.begin(),
-                                    str.end(),
-                                    '#',
-                                    ' '
-                                );
-
-                                newCard.Question = str;
-                                cards.push_back(newCard);
-
-                                continue;
-                            }
-                            if (cards.size() > 0) {
-                                cards[cards.size() - 1].Answer.append(str);
-                                cards[cards.size() - 1].Answer.append("\n");
+                                    continue;
+                                }
+                                if (cards.size() > 0) {
+                                    cards[cards.size() - 1].Answer.append(str);
+                                    cards[cards.size() - 1].Answer.append("\n");
+                                }
                             }
                         }
+
+                        ImGui::SameLine();
+
+                        ImGui::Text(files[i].substr(flashcardPath.size() + 1, files[i].size() - flashcardPath.size()).c_str());
+
                     }
                     ImGui::PopID();
                 }
