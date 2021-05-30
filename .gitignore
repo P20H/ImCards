@@ -38,3 +38,6 @@
 /ThirdParty/imgui_markdown/
 /Build/
 /Install/
+/.vs/
+/x64/
+/ImCards/x64/

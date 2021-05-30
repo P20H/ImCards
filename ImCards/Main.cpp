@@ -1,6 +1,14 @@
+
+#include <imgui.h>
+
 #include <ImFramework.h>
 #include <ImProperty.h>
-#include <imgui_markdown.h>
+#include <ImMarkdown.hpp>
+
+#include <gl/glew.h>
+#include <GLFW/glfw3.h>
+
+//#include <imgui_markdown.h>
 
 #include <iostream>
 #include <vector>
@@ -9,9 +17,6 @@
 #include <random>
 #include <algorithm>
 #include <functional>
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 
 //-----------------------------------------------------------------------------
 // [SECTION] Example App: Docking, DockSpace / ShowExampleAppDockSpace()
@@ -22,6 +27,7 @@
 // a window title bar and moving it (+ hold SHIFT if io.ConfigDockingWithShift is set).
 // DockSpace() and DockSpaceOverViewport() are only useful to construct a central docking
 // location for your application.
+/*
 void ShowExampleAppDockSpace(bool* p_open)
 {
     // In 99% case you should be able to just call DockSpaceOverViewport() and ignore all the code below!
@@ -111,17 +117,6 @@ void ShowExampleAppDockSpace(bool* p_open)
                 *p_open = false;
             ImGui::EndMenu();
         }
-       /* HelpMarker(
-            "When docking is enabled, you can ALWAYS dock MOST window into another! Try it now!" "\n\n"
-            " > if io.ConfigDockingWithShift==false (default):" "\n"
-            "   drag windows from title bar to dock" "\n"
-            " > if io.ConfigDockingWithShift==true:" "\n"
-            "   drag windows from anywhere and hold Shift to dock" "\n\n"
-            "This demo app has nothing to do with it!" "\n\n"
-            "This demo app only demonstrate the use of ImGui::DockSpace() which allows you to manually create a docking node _within_ another window. This is useful so you can decorate your main application window (e.g. with a menu bar)." "\n\n"
-            "ImGui::DockSpace() comes with one hard constraint: it needs to be submitted _before_ any window which may be docked into it. Therefore, if you use a dock spot as the central point of your application, you'll probably want it to be part of the very first window you are submitting to imgui every frame." "\n\n"
-            "(NB: because of this constraint, the implicit \"Debug\" window can not be docked into an explicit DockSpace() node, because that window is submitted as part of the NewFrame() call. An easy workaround is that you can create your own implicit \"Debug##2\" window after calling DockSpace() and leave it in the window stack for anyone to use.)"
-        );*/
 
         ImGui::EndMenuBar();
     }
@@ -129,47 +124,48 @@ void ShowExampleAppDockSpace(bool* p_open)
     ImGui::End();
 }
 
+*/
 
 
 
-
-bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
-{
-    // Load from file
-    int image_width = 0;
-    int image_height = 0;
-    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
-    if (image_data == NULL)
-        return false;
-
-    // Create a OpenGL texture identifier
-    GLuint image_texture;
-    glGenTextures(1, &image_texture);
-    glBindTexture(GL_TEXTURE_2D, image_texture);
-
-    // Setup filtering parameters for display
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
-
-    // Upload pixels into texture
-#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-#endif
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
-    stbi_image_free(image_data);
-
-    *out_texture = image_texture;
-    *out_width = image_width;
-    *out_height = image_height;
-
-    return true;
-}
+//bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_width, int* out_height)
+//{
+//    // Load from file
+//    int image_width = 0;
+//    int image_height = 0;
+//    unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+//    if (image_data == NULL)
+//        return false;
+//
+//    // Create a OpenGL texture identifier
+//    GLuint image_texture;
+//    glGenTextures(1, &image_texture);
+//    glBindTexture(GL_TEXTURE_2D, image_texture);
+//
+//    // Setup filtering parameters for display
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+//
+//    // Upload pixels into texture
+//#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+//    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+//#endif
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+//    stbi_image_free(image_data);
+//
+//    *out_texture = image_texture;
+//    *out_width = image_width;
+//    *out_height = image_height;
+//
+//    return true;
+//}
 
 static std::string currCardSetPath = "";
 static std::string flashcardPath = "";
 
+/*
 inline ImGui::MarkdownImageData ImageCallback(ImGui::MarkdownLinkCallbackData data_)
 {
     // In your application you would load an image based on data_ input. Here we just use the imgui font texture.
@@ -229,20 +225,58 @@ inline ImGui::MarkdownImageData ImageCallback(ImGui::MarkdownLinkCallbackData da
 
     return imageData;
 }
+*/
+
+
+//void ExampleMarkdownFormatCallback(const ImGui::MarkdownFormatInfo& markdownFormatInfo_, bool start_)
+//{
+//    // Call the default first so any settings can be overwritten by our implementation.
+//    // Alternatively could be called or not called in a switch statement on a case by case basis.
+//    // See defaultMarkdownFormatCallback definition for furhter examples of how to use it.
+//    ImGui::defaultMarkdownFormatCallback(markdownFormatInfo_, start_);
+//
+//
+//    switch (markdownFormatInfo_.type)
+//    {
+//        // example: change the colour of heading level 2
+//    case ImGui::MarkdownFormatType::HEADING:
+//    {
+//        if (markdownFormatInfo_.level == 2)
+//        {
+//            if (start_)
+//            {
+//                //ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+//            }
+//            else
+//            {
+//                //ImGui::PopStyleColor();
+//            }
+//        }
+//        
+//
+//        break;
+//    }
+//    default:
+//    {
+//        break;
+//    }
+//    }
+//}
+//
 
 
 int main(int argc, char** argv) {
     ImFramework::Init();
 
-    ImFramework::EnableFeature(ImFramework_Feature::Feature_DPI_Awareness, true);
+    ImFramework::EnableFeature(ImFramework_Feature::DPI_Awareness, true);
 
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    //io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 
     //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    static ImGui::MarkdownConfig mdConfig;
+    //static ImGui::MarkdownConfig mdConfig;
 
 
     struct Card {
@@ -303,18 +337,18 @@ int main(int argc, char** argv) {
             static bool show = true;
 
             //mdConfig.linkCallback = LinkCallback;
-            mdConfig.tooltipCallback = NULL;
-            mdConfig.imageCallback = ImageCallback;
+            //mdConfig.tooltipCallback = NULL;
+            //mdConfig.imageCallback = ImageCallback;
             //mdConfig.linkIcon = ICON_FA_LINK;
             //mdConfig.headingFormats[0] = { H1, true };
             //mdConfig.headingFormats[1] = { H2, true };
             //mdConfig.headingFormats[2] = { H3, false };
-            mdConfig.userData = NULL;
-           // mdConfig.formatCallback = ExampleMarkdownFormatCallback;
+            //mdConfig.userData = NULL;
+            //mdConfig.formatCallback = ExampleMarkdownFormatCallback;
 
 
 
-            ShowExampleAppDockSpace(&show);
+            //ShowExampleAppDockSpace(&show);
 
             // Select set
             {
@@ -338,7 +372,6 @@ int main(int argc, char** argv) {
                     {
                         std::string relPath = files[i].substr(flashcardPath.size() + 1, files[i].size() - flashcardPath.size());
 
-
                         if (ImGui::Button("Select")) {
 
                             std::string pathHash = std::to_string(std::hash<std::string>{}(relPath));
@@ -352,20 +385,28 @@ int main(int argc, char** argv) {
                             std::string str;
                             while (std::getline(file, str))
                             {
-                                if (str.find("##") != std::string::npos) {
+                                if (str.find("##") != std::string::npos && str.find("###") == std::string::npos) {
                                     Card newCard;
 
                                     // parse question
+                                    /*
                                     std::replace(
                                         str.begin(),
                                         str.end(),
                                         '#',
                                         ' '
                                     );
+                                    */
+                                    
 
                                     newCard.Question = str;
                                     cards.push_back(newCard);
 
+                                    continue;
+                                }
+                                if (str.find("###") != std::string::npos) {
+
+                                    cards[cards.size() - 1].Question.append(str);
                                     continue;
                                 }
                                 if (cards.size() > 0) {
@@ -388,22 +429,28 @@ int main(int argc, char** argv) {
 
             // Current Card
             {
-
                 ImGui::Begin("Current card");
 
                 ImGui::SetWindowFontScale(2);
 
                 if (cards.size() > 0) {
-                    ImGui::Markdown(cards[currCard].Question.c_str(), cards[currCard].Question.length(), mdConfig);
-                    
-                    ImGui::Separator();
 
-                    if (showAnswer) {
-                        ImGui::Markdown(cards[currCard].Answer.c_str(), cards[currCard].Answer.length(), mdConfig);
+                    //ImGui::BeginChild("Question");
+                    {
+                        ImMarkdown::Render(cards[currCard].Question);
+
+                        //ImGui::TextWrapped(cards[currCard].Question.c_str());
+                        //ImGui::Markdown(cards[currCard].Question.c_str(), cards[currCard].Question.length(), mdConfig);
+
                     }
 
+                    ImGui::Separator();
 
+                    //ImGui::EndChild();
 
+                    if (showAnswer) {
+                        ImMarkdown::Render(cards[currCard].Answer);
+                    }
                 }
 
                 ImGui::End();
@@ -491,7 +538,6 @@ int main(int argc, char** argv) {
             }
 
         }
-
         ImFramework::EndWindow();
 
 
